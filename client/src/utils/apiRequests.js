@@ -39,6 +39,7 @@ export default {
 
   post: (resource, body) => {
     if (body.ggbFiles) {
+      console.log('body.ggb files')
       body = prepFormData(body)
     }
     console.log(body)
@@ -110,9 +111,25 @@ export default {
 }
 
 const prepFormData = body => {
-  let formData = new FormData();
-    body.ggbFiles.forEach(file => {formData.append('ggbFiles', file, file.name)})
-    Object.keys(body).forEach(key => {formData.append(key, body[key])})
-    console.log(formData.keys())
-    console.log(formData.getAll('ggbFiles'))
+  if (body.ggbFiles) {
+    console.log(body)
+    let formData = new FormData();
+    Object.keys(body).forEach(key => {
+      if (key !== 'ggbFiles') {
+        let value = body[key]
+        if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(body[key]))
+        } else {
+          formData.append(key, value)
+        }
+      } else {
+        formData.append('ggbFiles', body[key][0])
+      }
+    })
+    for (var value of formData.values()) {
+      console.log(value); 
+    }
+    return formData;
+  }
+  return body;
 }

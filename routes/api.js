@@ -3,6 +3,8 @@ const router = express.Router()
 const controllers = require('../controllers')
 const middleware = require('../middleware/api');
 const errors = require('../middleware/errors');
+const multer = require('multer')
+const upload = multer({dest: '/uploads'})
 
 router.param('resource', middleware.validateResource)
 router.param('id', middleware.validateId);
@@ -60,12 +62,8 @@ router.get('/:resource/:id', middleware.validateUser, (req, res, next) => {
 		})
 })
 
-router.post('/:resource', 
-// middleware.validateUser, middleware.validateNewRecord, 
-(req, res, next) => {
+router.post('/:resource', upload.single('ggbFiles'), middleware.validateUser, middleware.validateNewRecord, (req, res, next) => {
 	let controller = controllers[req.params.resource]
-	console.log(req.body)
-	console.log(req.files)
 	controller.post(req.body)
 	  .then(result => res.json({ result }))
 	  .catch(err => {

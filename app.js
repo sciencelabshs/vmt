@@ -9,6 +9,9 @@ const passport = require('passport');
 const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const mongoose = require('mongoose');
+const multer = require('multer')
+
+const upload = multer({dest: '/uploads'})
 require('dotenv').config();
 
 // REQUIRE FILES

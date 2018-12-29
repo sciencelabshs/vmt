@@ -138,9 +138,9 @@ class NewResourceContainer extends Component {
     this.setState({privacySetting,})
   }
   setGgbFile = event => {
-    console.log(event.target.files)
+
     this.setState({
-      ggbFiles: [...this.state.ggbFiles].concat(event.target.files)
+      ggbFiles: event.target.files
     })
   }
 

@@ -22,12 +22,16 @@ const validateId = (req, res, next) => {
 };
 
 const validateUser = (req, res, next) => {
+  console.log(req.file)
+  console.log("BODY: ", req.body)
+  req.body = JSON.parse(req.body)
   const user = utils.getUser(req);
 
   if (_.isNil(user)) {
     return errors.sendError.InvalidCredentialsError(null, res);
   }
   next();
+  console.log('do we make it here?')
 };
 
 const canModifyResource = (req) => {
@@ -184,9 +188,15 @@ const prunePutBody = (user, recordIdToUpdate, body, details) => {
   return copy;
 }
 
+const uploadFile = (req, res, next) => {
+  console.log(req.body)
+  next();
+}
+
 module.exports.validateResource = validateResource;
 module.exports.validateId = validateId;
 module.exports.validateUser = validateUser;
 module.exports.canModifyResource = canModifyResource;
 module.exports.validateNewRecord = validateNewRecord;
 module.exports.prunePutBody = prunePutBody;
+module.exports.uploadFile = uploadFile;
