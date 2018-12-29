@@ -38,6 +38,10 @@ export default {
   // },
 
   post: (resource, body) => {
+    if (body.ggbFiles) {
+      body = prepFormData(body)
+    }
+    console.log(body)
     return axios.post(`/api/${resource}`, body)
   },
 
@@ -103,4 +107,12 @@ export default {
   getDesmos: url => {
     return axios.get(`/desmos?url=${url}`)
   }
+}
+
+const prepFormData = body => {
+  let formData = new FormData();
+    body.ggbFiles.forEach(file => {formData.append('ggbFiles', file, file.name)})
+    Object.keys(body).forEach(key => {formData.append(key, body[key])})
+    console.log(formData.keys())
+    console.log(formData.getAll('ggbFiles'))
 }

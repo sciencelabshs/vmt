@@ -60,8 +60,12 @@ router.get('/:resource/:id', middleware.validateUser, (req, res, next) => {
 		})
 })
 
-router.post('/:resource', middleware.validateUser, middleware.validateNewRecord, (req, res, next) => {
+router.post('/:resource', 
+// middleware.validateUser, middleware.validateNewRecord, 
+(req, res, next) => {
 	let controller = controllers[req.params.resource]
+	console.log(req.body)
+	console.log(req.files)
 	controller.post(req.body)
 	  .then(result => res.json({ result }))
 	  .catch(err => {

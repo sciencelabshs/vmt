@@ -11,7 +11,7 @@ const Step2New = props => {
       <div>
       {props.ggb 
         ? <div className={classes.Geogebra}>
-            <div className={classes.GeogebraButton}><Button>Select a Geogebra File</Button></div>
+            <input type="file" name='ggbFile' accept='.ggb' onChange={props.setGgbFile}/>
           </div> 
         : <TextInput
             light

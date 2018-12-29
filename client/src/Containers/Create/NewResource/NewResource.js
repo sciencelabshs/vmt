@@ -8,6 +8,7 @@ import Step3 from './Step3';
 import DueDate from './DueDate'
 import StepDisplay from './StepDisplay';
 import { NewResource, FromActivity } from '../../../Layout';
+import { prepFormData } from '../../../utils/prepFormData';
 import { getUserResources, populateResource }from '../../../store/reducers';
 import { Modal, Aux, Button, } from '../../../Components/';
 import classes from '../create.css';
@@ -45,8 +46,8 @@ const initialState = {
   name: '',
   description: '',
   desmosGraph: '',
-  ggbFile: '',
-  dueDate: '',
+  ggbFiles: [],
+  dueDate: null,
   activities: [],
   privacySetting: 'public',
 }
@@ -76,8 +77,8 @@ class NewResourceContainer extends Component {
       creator: this.props.userId,
       privacySetting: this.state.privacySetting,
       activities: this.state.activities.length > 0 ? this.state.activities : null,
-      ggbFile: this.state.ggbFile,
       desmosLink: this.state.desmosLink,
+      ggbFiles: this.state.ggbFiles,
       course: this.props.courseId,
       roomType: this.state.ggb ? 'geogebra' : 'desmos',
       image: `http://tinygraphs.com/${shapes[resource]}/${this.state.name}?theme=${theme}&numcolors=4&size=220&fmt=svg`
@@ -88,7 +89,7 @@ class NewResourceContainer extends Component {
     switch (resource) {
       case 'courses' :
         delete newResource.activities;
-        delete newResource.ggbFile;
+        delete newResource.ggbFiles;
         delete newResource.desmosLink;
         delete newResource.course;
         delete newResource.roomType;
@@ -96,7 +97,7 @@ class NewResourceContainer extends Component {
         this.props.createCourse(newResource);
         break;
       case 'activities' :
-        this.props.createActivity(newResource);
+        this.props.createActivity(prepFormData(newResource));
         break;
       case 'rooms' :
         newResource.members = [{user: {_id: this.props.userId, username: this.props.username}, role: 'facilitator'}];
@@ -136,6 +137,13 @@ class NewResourceContainer extends Component {
   setPrivacy = (privacySetting) => {
     this.setState({privacySetting,})
   }
+  setGgbFile = event => {
+    console.log(event.target.files)
+    this.setState({
+      ggbFiles: [...this.state.ggbFiles].concat(event.target.files)
+    })
+  }
+
   nextStep = (direction) => {
     let copying = this.state.copying;
     if (this.state.step === 0) {
@@ -175,7 +183,7 @@ class NewResourceContainer extends Component {
       <Step1 displayResource={displayResource} name={this.state.name} description={this.state.description} changeHandler={this.changeHandler}/>, 
       this.state.copying 
         ? <Step2Copy displayResource={displayResource} addActivity={this.addActivity}/>
-        : <Step2New setGgb={this.setGgb} ggb={this.state.ggb}/>,
+        : <Step2New setGgb={this.setGgb} ggb={this.state.ggb} setGgbFile={this.setGgbFile}/>,
       <Step3 displayResource={displayResource} check={this.setPrivacy} privacySetting={this.state.privacySetting} />
     ]
     if (resource === 'rooms') {
@@ -186,7 +194,7 @@ class NewResourceContainer extends Component {
       steps.splice(1, 1)
     }
     
-    let stepDisplays = steps.map((step, i) => <div className={[classes.Step, i <= this.state.step ? classes.CompletedStep : null].join(' ')}></div>);
+    let stepDisplays = steps.map((step, i) => <div key={i} className={[classes.Step, i <= this.state.step ? classes.CompletedStep : null].join(' ')}></div>);
 
 
     let buttons;
