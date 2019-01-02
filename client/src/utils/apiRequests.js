@@ -123,11 +123,12 @@ const prepFormData = body => {
           formData.append(key, value)
         }
       } else {
-        formData.append('ggbFiles', body[key][0])
+        console.log(body[key])
+        formData.append('ggbFiles', body[key])
       }
     })
     for (var value of formData.values()) {
-      console.log(value); 
+      console.log(value);
     }
     return formData;
   }

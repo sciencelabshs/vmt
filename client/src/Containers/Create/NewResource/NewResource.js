@@ -40,20 +40,20 @@ const shapes = {
 const initialState = {
   // rooms: [],
   creating: false, // true will open modal and start creation process
-  copying: false, 
+  copying: false,
   ggb: true,
   step: 0, // step of the creation process
   name: '',
   description: '',
   desmosGraph: '',
-  ggbFiles: [],
+  ggbFiles: {},
   dueDate: null,
   activities: [],
   privacySetting: 'public',
 }
 
 class NewResourceContainer extends Component {
-  
+
   state = {...initialState}
 
   startCreation = () => this.setState({creating: true,})
@@ -120,7 +120,7 @@ class NewResourceContainer extends Component {
   addActivity = (event, id) => {
     let updatedActivities;
     if (this.state.activities.indexOf(id) >= 0) {
-      updatedActivities = this.state.activities.filter(acId => acId !== id); 
+      updatedActivities = this.state.activities.filter(acId => acId !== id);
     } else {
       updatedActivities = [...this.state.activities, id]
     }
@@ -130,7 +130,7 @@ class NewResourceContainer extends Component {
   setGgb = (event) => {
     this.setState({ggb: event.target.name === 'geogebra'})
   }
-  
+
   setDueDate = dueDate => {
     this.setState({dueDate,})
   }
@@ -138,7 +138,7 @@ class NewResourceContainer extends Component {
     this.setState({privacySetting,})
   }
   setGgbFile = event => {
-
+    console.log("files: ", event.target.files)
     this.setState({
       ggbFiles: event.target.files
     })
@@ -156,13 +156,13 @@ class NewResourceContainer extends Component {
       copying: copying,
     })
   }
-  
+
   prevStep = () => {
     this.setState({
       step: this.state.step - 1 || 0,
     })
   }
-  
+
   closeModal = () => {
     this.setState({
       copying: false,
@@ -180,8 +180,8 @@ class NewResourceContainer extends Component {
     } else { displayResource = resource.slice(0, resource.length - 1); }
 
     let steps = [
-      <Step1 displayResource={displayResource} name={this.state.name} description={this.state.description} changeHandler={this.changeHandler}/>, 
-      this.state.copying 
+      <Step1 displayResource={displayResource} name={this.state.name} description={this.state.description} changeHandler={this.changeHandler}/>,
+      this.state.copying
         ? <Step2Copy displayResource={displayResource} addActivity={this.addActivity}/>
         : <Step2New setGgb={this.setGgb} ggb={this.state.ggb} setGgbFile={this.setGgbFile}/>,
       <Step3 displayResource={displayResource} check={this.setPrivacy} privacySetting={this.state.privacySetting} />
@@ -193,14 +193,14 @@ class NewResourceContainer extends Component {
     if (resource === 'courses') {
       steps.splice(1, 1)
     }
-    
+
     let stepDisplays = steps.map((step, i) => <div key={i} className={[classes.Step, i <= this.state.step ? classes.CompletedStep : null].join(' ')}></div>);
 
 
     let buttons;
     if (this.state.step === 0 ) {
       if (resource === 'courses') {
-       buttons = <Button click={this.nextStep}>next</Button>  
+       buttons = <Button click={this.nextStep}>next</Button>
       }else {
         buttons = <div className={classes.Row}>
           <Button disabled={this.state.name.length === 0} click={() => {this.nextStep('copy')}}m={5}>copy existing activities</Button>
@@ -216,8 +216,8 @@ class NewResourceContainer extends Component {
     }
 
     return (
-      <Aux> 
-        {this.state.creating 
+      <Aux>
+        {this.state.creating
           ? <Modal show={this.state.creating} closeModal={this.closeModal}>
               {this.state.step > 0 ? <i onClick={() => this.setState({step: this.state.step - 1})} className={["fas", "fa-arrow-left", classes.BackIcon].join(' ')}></i> : null}
               <div className={classes.Container}>
@@ -230,7 +230,7 @@ class NewResourceContainer extends Component {
               </div>
             </Modal>
           : null
-          } 
+          }
         <div className={classes.Button}>
           <Button theme={'Small'} click={this.startCreation} data-testid={`create-${displayResource}`}>
             Create <span className={classes.Plus}><i className="fas fa-plus"></i></span>
