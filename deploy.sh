@@ -4,7 +4,7 @@ echo -e "\e[1;30m"
 if [ -d "./client/build" ]; then
   rm -rf ./client/build
 fi
-npm run build-$2
+npm run build
 if [ -d "./$2" ]; then
   rm -rf ./$2
 fi
