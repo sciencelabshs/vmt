@@ -74,14 +74,18 @@
   );
 }
 .bgTop {
+  composes: waveWrapperInner;
+  animation: move-wave 3s linear infinite;
   z-index: 15;
   opacity: 0.7;
 }
 .bgMiddle {
+  composes: waveWrapperInner;
   z-index: 16;
   opacity: 0.7;
 }
 .bgBottom {
+  composes: waveWrapperInner;
   z-index: 17;
   opacity: 0.4;
 }
@@ -95,26 +99,21 @@
   transform-origin: center bottom;
 }
 .waveTop {
+  composes: wave;
   background-size: 50% 100px;
   background-image: url("./wave-top.png");
 }
-.waveAnimation .bgTop {
-  animation: move-wave 3s linear infinite;
-  /* -webkit-animation: move-wave 3s;
-  -webkit-animation-delay: 1s;
-  animation-delay: 1s; */
-}
+
 .waveMiddle {
+  composes: wave;
   background-size: 50% 120px;
+  animation: move_wave 10s linear infinite;
   background-image: url("./wave-mid.png");
 }
-.waveAnimation .waveMiddle {
-  animation: move_wave 10s linear infinite;
-}
+
 .waveBottom {
+  composes: wave;
   background-size: 50% 100px;
-  background-image: url("./wave-bot.png");
-}
-.waveAnimation .waveBottom {
   animation: move_wave 15s linear infinite;
+  background-image: url("./wave-bot.png");
 }
