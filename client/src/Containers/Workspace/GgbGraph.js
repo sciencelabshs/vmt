@@ -40,13 +40,13 @@ class GgbGraph extends Component {
     window.addEventListener("resize", this.updateDimensions);
     socket.removeAllListeners("RECEIVE_EVENT");
     socket.on("RECEIVE_EVENT", data => {
-      let updatedTabs = this.props.room.tabs.map(tab => {
-        if (tab._id === data.tab) {
-          tab.currentState = data.currentState;
-        }
-        return tab;
-      });
-      this.props.updatedRoom(this.props.room._id, { tabs: updatedTabs });
+      // let updatedTabs = this.props.room.tabs.map(tab => {
+      //   if (tab._id === data.tab) {
+      //     tab.currentState = data.currentState;
+      //   }
+      //   return tab;
+      // });
+      // this.props.updatedRoom(this.props.room._id, { tabs: updatedTabs });
       this.setState({ receivingData: true }, () => {
         // If this happend on the current tab
         if (this.props.room.tabs[this.props.currentTab]._id === data.tab) {
@@ -249,10 +249,10 @@ class GgbGraph extends Component {
       language: "en",
       useBrowserForJS: false,
       borderColor: "#ddd",
-      buttonShadows: true,
       preventFocus: true,
+      buttonShadows: true,
       appletOnLoad: this.initializeGgb,
-      appName: "3D Graphics"
+      appName: "classic"
     };
 
     const ggbApp = new window.GGBApplet(parameters, "5.0");

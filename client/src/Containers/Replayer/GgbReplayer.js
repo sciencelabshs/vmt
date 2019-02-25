@@ -8,7 +8,8 @@ import { parseString } from "xml2js";
 class GgbReplayer extends Component {
   state = {
     loading: true,
-    xmlContext: ""
+    xmlContext: "",
+    updating: false
   };
 
   graph = React.createRef();
@@ -51,20 +52,13 @@ class GgbReplayer extends Component {
         !this.state.loading &&
         log[index].event
       ) {
-        // check if the tab has changed
         this.constructEvent(log[index]);
       }
-
-      // IF we're skipping it means we might need to reconstruct several evenets, possible in reverse order if the prevIndex is greater than this index.
-      // This is a god damned mess...good luck
     }
-    // else if (!this.state.loading || this.state.tabStates !== prevState.tabStates){
-    //   console.log('the tabState have changed')
-    //   this.constructEvent(log[index])
-    // }
   }
 
   componentWillUnmount() {
+    delete window[`ggbApplet${this.props.tabId}A`];
     window.removeEventListener("resize", this.updateDimensions);
   }
 
@@ -103,33 +97,37 @@ class GgbReplayer extends Component {
   }
 
   constructEvent(data) {
-    switch (data.eventType) {
-      case "ADD":
-        console.log(typeof data.event);
-        if (data.definition) {
-          console.log("evauluating command");
-          this.ggbApplet.evalCommand(`${data.label}:${data.definition}`);
+    this.setState(
+      { updating: true },
+      () => {
+        switch (data.eventType) {
+          case "ADD":
+            if (data.definition) {
+              console.log("evauluating command");
+              this.ggbApplet.evalCommand(`${data.label}:${data.definition}`);
+            }
+            this.ggbApplet.evalXML(data.event);
+            this.ggbApplet.evalCommand("UpdateConstruction()");
+            break;
+          case "REMOVE":
+            this.ggbApplet.deleteObject(data.label);
+            break;
+          case "UPDATE":
+            this.ggbApplet.evalXML(data.event);
+            this.ggbApplet.evalCommand("UpdateConstruction()");
+            break;
+          case "BATCH_ADD":
+            if (data.definition) {
+              console.log(data.definition);
+              // this.recursiveUpdate(event, 1, true);
+            }
+            break;
+          default:
+            break;
         }
-        console.log(data.event);
-        this.ggbApplet.evalXML(data.event);
-        this.ggbApplet.evalCommand("UpdateConstruction()");
-        break;
-      case "REMOVE":
-        this.ggbApplet.deleteObject(data.label);
-        break;
-      case "UPDATE":
-        this.ggbApplet.evalXML(data.event);
-        this.ggbApplet.evalCommand("UpdateConstruction()");
-        break;
-      case "BATCH_ADD":
-        if (data.definition) {
-          console.log(data.definition);
-          // this.recursiveUpdate(event, 1, true);
-        }
-        break;
-      default:
-        break;
-    }
+      },
+      0
+    );
   }
 
   constructConsolidatedEvents(xml) {}
@@ -144,14 +142,16 @@ class GgbReplayer extends Component {
       showMenuBar: false,
       showAlgebraInput: true,
       language: "en",
-      useBrowserForJS: true,
+      useBrowserForJS: false,
       borderColor: "#ddd",
       preventFocus: true,
+      buttonShadows: true,
+      // allowUpscale: true,
       appletOnLoad: this.initializeGgb,
-      appName: "3D Graphics"
+      appName: "classic"
     };
-    const ggbApp = new window.GGBApplet(parameters, "5.0");
-    ggbApp.inject(`ggb-element${this.props.tabId}A`);
+    this[`ggbApp${this.props.tabId}`] = new window.GGBApplet(parameters, "5.0");
+    this[`ggbApp${this.props.tabId}`].inject(`ggb-element${this.props.tabId}A`);
   };
 
   initializeGgb = () => {
