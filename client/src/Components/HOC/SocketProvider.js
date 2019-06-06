@@ -27,33 +27,25 @@ class SocketProvider extends Component {
     showNtfMessage: false,
   };
   componentDidMount() {
-    const {
-      user,
-      connectClearError,
-      connectGetUser,
-      connectUpdateUser,
-    } = this.props;
+    const { user, connectGetUser, connectUpdateUser } = this.props;
     // setTimeout(() => this.setState({ showNtfMessage: true }), 2000);
-    if (user.loggedIn) {
-      connectClearError(); // get rid of any lingering errors in the store from their last session
-      connectGetUser(user._id);
-      socket.on('connect', () => {
-        // @TODO consider doing this on the backend...we're trgin to make sure the socketId stored on the user obj in the db is fresh.
-        // Why dont we just, every time a socket connects on the backend, grab the user obj and go update their socketId
-        const userId = user._id;
-        const socketId = socket.id;
-        socket.emit('SYNC_SOCKET', { socketId, userId }, (res, err) => {
-          if (err) {
-            // something went wrong updatnig user socket
-            // THIS MEANS WE WONT GET NOTIFICATIONS
-            // HOW SHOULD WE HANDLE THIS @TODO
-            return;
-          }
-          connectUpdateUser({ connected: true });
-        });
-        this.initializeListeners();
+    connectGetUser();
+    socket.on('connect', () => {
+      // @TODO consider doing this on the backend...we're trgin to make sure the socketId stored on the user obj in the db is fresh.
+      // Why dont we just, every time a socket connects on the backend, grab the user obj and go update their socketId
+      const userId = user._id;
+      const socketId = socket.id;
+      socket.emit('SYNC_SOCKET', { socketId, userId }, (res, err) => {
+        if (err) {
+          // something went wrong updatnig user socket
+          // THIS MEANS WE WONT GET NOTIFICATIONS
+          // HOW SHOULD WE HANDLE THIS @TODO
+          return;
+        }
+        connectUpdateUser({ connected: true });
       });
-    }
+      this.initializeListeners();
+    });
   }
 
   shouldComponentUpdate(nextProps, nextState) {
