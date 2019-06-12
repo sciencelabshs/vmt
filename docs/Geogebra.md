@@ -57,4 +57,33 @@ creates a buffer multippart events like drags and shape creation
 
 ### ComponentDidMount
 
-Here we initialize the updateDemnsions() method as the event handler when the window is resized
+Here we initialize the updateDimensions() method as the event handler when the window is resized
+and the 'RECEIVE_EVENT' socket listener.
+
+**socket.on('RECEIVE_EVENT', data)**
+
+This method listens for events coming over the socket and either applies those events immediately based on the data.eventType or, if we're still in the process of applying the last event to come over the socket (as indicated by the values of `this.batchUpdating` or `this.receivingData`) it adds the event to `this.socketQueue`. Bacth updates occur by invoking from `recursiveUpdate(events, eventType)` and when the recursiveUpdate function finishes, it checks `this.socketQueue` for events and applies them one at a time.
+
+**recursiveUpdate(event, eventType)**
+
+applies multiple events sequenetially. Needed for making dragging look smoothe
+
+| Param      | Type                      | Description                                                        |
+| ---------- | ------------------------- | ------------------------------------------------------------------ |
+| events     | <code>Array/Object</code> | array of ggb generated xml events, commands, or a VMT event Object |
+| updateType | <code>String</code>       | 'ADDING' invokes evalCommand. Null invokes evalXML                 |
+
+- Set `checkSocketQueue = true` so after we've made our updates we know to look at the socketQueue for events that came in while making the current update.
+- IF events === Array
+  - IF updateType === 'ADDING'
+    - loop over event array calling evalCommand() on each event
+  - ELSE take the first event from the event array and pass it to evalXML(). Then in a setTimeout(0) pass the remaining events to recursiveUpdate. We utilize setTimeout to ensure that evalXML has finished before moving on to the next event. (Still unclear if this is necessary). We also set `checkSocketQueue = false` because we are still applying events from this array and are not yet ready to check the socketQueue.
+- ELSE IF events === Object, exalXML()
+- IF checkSocketQueue and socketQueue.length > 0
+  - Take the first event off the socket queue
+  - determine the event Type i.e. 'ADDING' or null and Array or Object
+  - call recrusiveUpdate
+- ELSE {
+  all updating is done including the socket queue.
+  set receivingData and batchUpdating to false
+  }

@@ -10,6 +10,16 @@ import ControlWarningModal from './ControlWarningModal';
 import socket from '../../utils/sockets';
 import ggbTools from './Tools/GgbIcons';
 
+const GgbEventTypes = [
+  'ADD',
+  'BATCH_ADD',
+  'UPDATE',
+  'BATCH_UPDATE',
+  'REMOVE',
+  'UPDATE_STYLE',
+  'REDO',
+  'UNDO',
+];
 class GgbGraph extends Component {
   state = {
     showControlWarning: false,
@@ -49,6 +59,9 @@ class GgbGraph extends Component {
     window.addEventListener('visibilitychange', this.visibilityChange);
     // socket.removeAllListeners("RECEIVE_EVENT");
     socket.on('RECEIVE_EVENT', data => {
+      console.log('receivied data: ', data);
+      console.log('recievingData: ', this.receivingData);
+      console.log('batchUpdating, ', this.batchUpdating);
       // console.log('received event: ', data);
       if (!this.isWindowVisible) {
         this.isFaviconNtf = true;
@@ -67,79 +80,19 @@ class GgbGraph extends Component {
         // If we're still processing data from the last event
         // save this event in a queue...then when processing is done we'll pull
         // from this queue
-        if (this.receivingData || this.batchUpdating) {
-          // we're already processing the previous event.
+        if (
+          (this.receivingData || this.batchUpdating) &&
+          GgbEventTypes.indexOf(data.eventType) > -1
+        ) {
+          console.log('adding to socket queue');
           this.socketQueue.push(data);
           return;
         }
-
-        // this.updateConstructionState();
         this.receivingData = true;
-        if (room.tabs[tabId]._id === data.tab) {
-          switch (data.eventType) {
-            case 'ADD':
-              if (data.definition && data.definition.length > 0) {
-                this.ggbApplet.evalCommand(`${data.label}:${data.definition}`);
-              }
-              this.ggbApplet.evalXML(data.event);
-              this.ggbApplet.evalCommand('UpdateConstruction()');
-              break;
-            case 'REMOVE':
-              if (data.eventArray) {
-                this.updatingOn = true;
-                data.eventArray.forEach(label => {
-                  this.ggbApplet.deleteObject(label);
-                });
-                this.updatingOn = false;
-                this.receivingData = false;
-              } else {
-                this.ggbApplet.deleteObject(data.label);
-              }
-              break;
-            case 'UPDATE':
-              this.ggbApplet.evalXML(data.event);
-              this.ggbApplet.evalCommand('UpdateConstruction()');
-              break;
-            case 'CHANGE_PERSPECTIVE':
-              this.ggbApplet.setPerspective(data.event);
-              this.ggbApplet.showAlgebraInput(true);
-              break;
-            case 'BATCH_UPDATE':
-              // this.updatingOn = true;
-              this.batchUpdating = true;
-              this.recursiveUpdate(data.eventArray, data.noOfPoints);
-              break;
-            case 'BATCH_ADD':
-              this.batchUpdating = true;
-              if (data.definition) {
-                this.recursiveUpdate(data.eventArray, 'ADDING');
-              }
-              break;
-            case 'UPDATE_STYLE': {
-              if (data.eventArray) {
-                this.recursiveUpdate(data.eventArray);
-              }
-              break;
-            }
-            case 'UNDO': {
-              this.ggbApplet.undo(); // @TODO this is not working...undo only undoes USER actions
-              break;
-            }
-            case 'REDO': {
-              this.ggbApplet.redo();
-              break;
-            }
-            default:
-              this.receivingData = false;
-              break;
-          }
-          if (this.socketQueue.length > 0) {
-            // console.log('something got stuck in the socket queue??');
-            // console.log(this.socketQueue);
-          }
-        }
+        this.constructEvent(data);
       }
     });
+
     socket.on('FORCE_SYNC', data => {
       this.receivingData = true;
       data.tabs.forEach((tab, i) => {
@@ -280,6 +233,7 @@ class GgbGraph extends Component {
     link.href = href;
     document.getElementsByTagName('head')[0].appendChild(link);
   };
+
   /**
    * @method recursiveUpdate
    * @description takes an array of events and updates the construction in batches
@@ -287,65 +241,129 @@ class GgbGraph extends Component {
    * Note that this is copy-pasted in GgbReplayer for now, consider abstracting.
    * When we've reached the bottom of the recursive chain we check if any events came in while
    * making these changes. (See the socket listener if(receviingData))
-   * @param  {Array} events - array of ggb xml events
-   * @param  {Number} batchSize - the batch size, i.e., number of points in the shape
-   * @param  {Boolean} adding - true if BATCH_ADD false if BATCH_UPDATE
+   * @param  {Array || Object} events - array of ggb xml events
+   * @param  { String } updateType - 'ADDING if we want to invoke evalCommand else null to invoke evalXML'
    */
 
+  constructEvent = data => {
+    let readyToClearSocketQueue = true;
+    switch (data.eventType) {
+      case 'ADD':
+        if (data.definition && data.definition.length > 0) {
+          this.ggbApplet.evalCommand(`${data.label}:${data.definition}`);
+        }
+        this.ggbApplet.evalXML(data.event);
+        this.ggbApplet.evalCommand('UpdateConstruction()');
+        break;
+      case 'REMOVE':
+        if (data.eventArray) {
+          this.updatingOn = true;
+          data.eventArray.forEach(label => {
+            this.ggbApplet.deleteObject(label);
+          });
+        } else {
+          this.ggbApplet.deleteObject(data.label);
+        }
+        break;
+      case 'UPDATE':
+        this.ggbApplet.evalXML(data.event);
+        this.ggbApplet.evalCommand('UpdateConstruction()');
+        break;
+      case 'CHANGE_PERSPECTIVE':
+        this.ggbApplet.setPerspective(data.event);
+        this.ggbApplet.showAlgebraInput(true);
+        break;
+      case 'BATCH_UPDATE':
+        // this.updatingOn = true;
+        readyToClearSocketQueue = false;
+        this.batchUpdating = true;
+        this.recursiveUpdate(data.eventArray);
+        break;
+      case 'BATCH_ADD':
+        readyToClearSocketQueue = false;
+        this.batchUpdating = true;
+        if (data.definition) {
+          this.recursiveUpdate(data.eventArray, 'ADDING');
+        }
+        break;
+      case 'UPDATE_STYLE': {
+        if (data.eventArray) {
+          readyToClearSocketQueue = false;
+          this.recursiveUpdate(data.eventArray);
+        }
+        break;
+      }
+      case 'UNDO': {
+        this.ggbApplet.undo(); // @TODO this is not working...undo only undoes USER actions
+        break;
+      }
+      case 'REDO': {
+        this.ggbApplet.redo();
+        break;
+      }
+      default:
+        break;
+    }
+    if (readyToClearSocketQueue) {
+      console.log('checking socket qeueue from CONSTRUCT_EVENT');
+      this.clearSocketQueue();
+    }
+  };
+
+  clearSocketQueue = () => {
+    console.log('this.clearSocketQueue');
+    if (this.socketQueue.length > 0) {
+      console.log('more event in socket queue');
+      const nextEvent = this.socketQueue.shift();
+      console.log(nextEvent);
+      this.constructEvent(nextEvent);
+    } else {
+      console.log('all done');
+      this.updatingOn = false;
+      this.batchUpdating = false;
+      this.receivingData = false;
+    }
+  };
+
+  // eslint-disable-next-line consistent-return
   recursiveUpdate = (events, updateType) => {
+    console.log('recursive update: ', events, updateType);
+    let readyToClearSocketQueue = true;
     if (events && events.length > 0 && Array.isArray(events)) {
       if (updateType === 'ADDING') {
         for (let i = 0; i < events.length; i++) {
           this.ggbApplet.evalCommand(events[i]);
         }
-        this.batchUpdating = false;
-        this.updatingOn = false;
-        this.receivingData = false;
       } else {
         // If the socket queue is getting long skip some events to speed it up
-        if (this.socketQueue.length > 1 && events.length > 2) {
-          if (Array.isArray(events)) {
-            // this should probably never happen...we should only have arrays in here
-            events.shift();
-          }
-        }
-        if (Array.isArray(events)) {
-          this.ggbApplet.evalXML(events.shift());
-        } else {
-          this.ggbApplet.evalXML(events);
-        }
+        // if (
+        //   this.socketQueue.length > 1 &&
+        //   events.length > 2 &&
+        //   events[0].eventType === 'BATCH_UPDATE'
+        // ) {
+        //   if (Array.isArray(events)) {
+        //     // this should probably never happen...we should only have arrays in here
+        //     events.shift();
+        //   }
+        // }
+        this.ggbApplet.evalXML(events.shift());
         this.ggbApplet.evalCommand('UpdateConstruction()');
-        setTimeout(() => {
-          this.recursiveUpdate(events);
-        }, 0);
+        if (events.length > 0) {
+          readyToClearSocketQueue = false;
+          return setTimeout(() => {
+            this.recursiveUpdate(events);
+          }, 0);
+        }
       }
+    } else if (events) {
+      this.ggbApplet.evalXML(events);
+      this.ggbApplet.evalCommand('UpdateConstruction()');
       // After we've finished applying all of the events check the socketQueue to see if more
       // events came over the socket while we were painting those updates
-    } else if (this.socketQueue.length > 0) {
-      // console.log('going into the socket queue');
-      const nextEvent = this.socketQueue.shift();
-      // console.log(nextEvent);
-      let adding = false;
-      if (nextEvent.eventArray) {
-        if (nextEvent.eventType === 'BATCH_ADD') {
-          adding = true;
-        }
-        this.recursiveUpdate(nextEvent.eventArray, adding);
-      } else if (nextEvent.event) {
-        if (nextEvent.eventType === 'ADD') {
-          adding = true;
-        }
-        this.recursiveUpdate([nextEvent.event], adding);
-      } else {
-        // console.log('nextEvent');
-        this.recursiveUpdate([nextEvent.event]);
-        // this.batchUpdating = false;
-        // this.receivingData = false;
-      }
-      // If we're all done
-    } else {
-      this.batchUpdating = false;
-      this.receivingData = false;
+    }
+    if (readyToClearSocketQueue) {
+      console.log('checking socket queue from RECURSIVE_UPDAYE');
+      this.clearSocketQueue();
     }
   };
 
@@ -480,7 +498,6 @@ class GgbGraph extends Component {
     // eslint-disable-next-line no-unused-vars
     const { referencing, resetControlTimer } = this.props;
     if (this.receivingData) {
-      this.receivingData = false;
       return;
     }
     // if (this.userCanEdit()) {
@@ -624,11 +641,7 @@ class GgbGraph extends Component {
    */
 
   addListener = label => {
-    if (this.batchUpdating) {
-      return;
-    }
-    if (this.receivingData) {
-      this.receivingData = false;
+    if (this.batchUpdating || this.receivingData) {
       return;
     }
     if (this.resetting) {
@@ -663,7 +676,6 @@ class GgbGraph extends Component {
   removeListener = label => {
     // const { room, currentTab } = this.props;
     if (this.receivingData && !this.updatingOn) {
-      this.receivingData = false;
       return;
     }
     if (this.resetting) {
@@ -693,7 +705,6 @@ class GgbGraph extends Component {
   updateListener = label => {
     if (this.batchUpdating || this.movingGeos) return;
     if (this.receivingData && !this.updatingOn) {
-      this.receivingData = false;
       return;
     }
     // let independent = this.ggbApplet.isIndependent(label);

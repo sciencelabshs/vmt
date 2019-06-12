@@ -92,7 +92,6 @@ class GgbActivityGraph extends Component {
       const updatedTabs = [...tabs];
       const updatedTab = { ...tabs[currentTab] };
       updatedTab.currentState = this.ggbApplet.getXML();
-      console.log(updatedTab.currentState);
       updatedTabs[currentTab] = updatedTab;
       updateActivityTab(activity._id, updatedTab._id, {
         currentState: updatedTab.currentState,

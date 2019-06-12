@@ -108,7 +108,6 @@ class Workspace extends Component {
       room.controlledBy !== null &&
       room.controlledBy !== user._id
     ) {
-      console.log('cdu: someone else in control');
       //   socket.emit('RELEASE_CONTROL', {user: {_id: this.props.user._id, username: this.props.user.username}, roomId: this.props.room._id}, (err, message) => {
       //     this.props.updatedRoom(this.props.room._id, {chat: [...this.props.room.chat, message]})
       //     // this.setState({activeMember: ''})
@@ -265,8 +264,6 @@ class Workspace extends Component {
   };
 
   toggleControl = (event, auto) => {
-    console.log('toggling control');
-    console.log('auto: ', auto);
     const {
       room,
       user,
@@ -283,10 +280,7 @@ class Workspace extends Component {
       );
     }
 
-    console.log('controlled by ', room.controlledBy);
-    console.log('user.id: ', user._id);
     if (room.controlledBy === user._id) {
-      console.log('room is controlled by this user...so releasing controll');
       // Releasing control
       const message = {
         _id: mongoIdGenerator(),
@@ -302,19 +296,14 @@ class Workspace extends Component {
       connectAddToLog(room._id, message);
       this.setState({ awarenessDesc: message.text, awarenessIcon: null });
       socket.emit('RELEASE_CONTROL', message, err => {
-        console.log('emitted release control');
         // eslint-disable-next-line no-console
         if (err) console.log(err);
       });
-      console.log('clearing control timer');
       clearTimeout(this.controlTimer);
     }
 
     // If room is controlled by someone else
     else if (room.controlledBy) {
-      console.log(
-        'someone else is in control so Im requesting to take control'
-      );
       const message = {
         _id: mongoIdGenerator(),
         text: 'Can I take control?',
@@ -328,7 +317,6 @@ class Workspace extends Component {
         connectAddToLog(room._id, message);
       });
     } else if (user.inAdminMode) {
-      console.log('user is in admin mode');
       this.setState({
         showAdminWarning: true,
       });
@@ -342,7 +330,6 @@ class Workspace extends Component {
         0
       );
     } else {
-      console.log('no one was in control so this user is taking control');
       // We're taking control
       this.resetControlTimer();
       const message = {
@@ -361,7 +348,6 @@ class Workspace extends Component {
       // the room is falling out of sync in the first place, this a temp fix)
       connectUpdatedRoom(room._id, { controlledBy: user._id });
       socket.emit('TAKE_CONTROL', message, () => {
-        console.log('emitted take control!');
         //   console.log('CURRENT STSTE : ROOM : ', room);
         //   room.tabs.forEach(tab => {
         //     connectUpdatedRoomTab(room._id, tab._id, {
@@ -382,11 +368,9 @@ class Workspace extends Component {
   };
 
   resetControlTimer = () => {
-    console.log('resetting control timer');
     this.time = Date.now();
     clearTimeout(this.controlTimer);
     this.controlTimer = setTimeout(() => {
-      console.log('toggling control from the control timer');
       this.toggleControl();
     }, 60 * 1000);
   };
