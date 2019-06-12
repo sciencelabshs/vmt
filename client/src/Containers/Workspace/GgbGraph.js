@@ -10,16 +10,16 @@ import ControlWarningModal from './ControlWarningModal';
 import socket from '../../utils/sockets';
 import ggbTools from './Tools/GgbIcons';
 
-const GgbEventTypes = [
-  'ADD',
-  'BATCH_ADD',
-  'UPDATE',
-  'BATCH_UPDATE',
-  'REMOVE',
-  'UPDATE_STYLE',
-  'REDO',
-  'UNDO',
-];
+// const GgbEventTypes = [
+//   'ADD',
+//   'BATCH_ADD',
+//   'UPDATE',
+//   'BATCH_UPDATE',
+//   'REMOVE',
+//   'UPDATE_STYLE',
+//   'REDO',
+//   'UNDO',
+// ];
 class GgbGraph extends Component {
   state = {
     showControlWarning: false,
@@ -59,9 +59,9 @@ class GgbGraph extends Component {
     window.addEventListener('visibilitychange', this.visibilityChange);
     // socket.removeAllListeners("RECEIVE_EVENT");
     socket.on('RECEIVE_EVENT', data => {
-      console.log('receivied data: ', data);
-      console.log('recievingData: ', this.receivingData);
-      console.log('batchUpdating, ', this.batchUpdating);
+      // console.log('receivied data: ', data);
+      // console.log('recievingData: ', this.receivingData);
+      // console.log('batchUpdating, ', this.batchUpdating);
       // console.log('received event: ', data);
       if (!this.isWindowVisible) {
         this.isFaviconNtf = true;
@@ -79,12 +79,14 @@ class GgbGraph extends Component {
 
         // If we're still processing data from the last event
         // save this event in a queue...then when processing is done we'll pull
-        // from this queue
+        // from this queue in clearSocketQueue()
         if (
-          (this.receivingData || this.batchUpdating) &&
-          GgbEventTypes.indexOf(data.eventType) > -1
+          this.receivingData ||
+          this.batchUpdating
+          // &&
+          // GgbEventTypes.indexOf(data.eventType) > -1
         ) {
-          console.log('adding to socket queue');
+          // console.log('adding to socket queue');
           this.socketQueue.push(data);
           return;
         }
@@ -305,20 +307,20 @@ class GgbGraph extends Component {
         break;
     }
     if (readyToClearSocketQueue) {
-      console.log('checking socket qeueue from CONSTRUCT_EVENT');
+      // console.log('checking socket qeueue from CONSTRUCT_EVENT');
       this.clearSocketQueue();
     }
   };
 
   clearSocketQueue = () => {
-    console.log('this.clearSocketQueue');
+    // console.log('this.clearSocketQueue');
     if (this.socketQueue.length > 0) {
-      console.log('more event in socket queue');
+      // console.log('more event in socket queue');
       const nextEvent = this.socketQueue.shift();
-      console.log(nextEvent);
+      // console.log(nextEvent);
       this.constructEvent(nextEvent);
     } else {
-      console.log('all done');
+      // console.log('all done');
       this.updatingOn = false;
       this.batchUpdating = false;
       this.receivingData = false;
@@ -327,7 +329,7 @@ class GgbGraph extends Component {
 
   // eslint-disable-next-line consistent-return
   recursiveUpdate = (events, updateType) => {
-    console.log('recursive update: ', events, updateType);
+    // console.log('recursive update: ', events, updateType);
     let readyToClearSocketQueue = true;
     if (events && events.length > 0 && Array.isArray(events)) {
       if (updateType === 'ADDING') {
@@ -362,7 +364,7 @@ class GgbGraph extends Component {
       // events came over the socket while we were painting those updates
     }
     if (readyToClearSocketQueue) {
-      console.log('checking socket queue from RECURSIVE_UPDAYE');
+      // console.log('checking socket queue from RECURSIVE_UPDAYE');
       this.clearSocketQueue();
     }
   };
