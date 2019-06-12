@@ -92,6 +92,7 @@ class GgbActivityGraph extends Component {
       const updatedTabs = [...tabs];
       const updatedTab = { ...tabs[currentTab] };
       updatedTab.currentState = this.ggbApplet.getXML();
+      console.log(updatedTab.currentState);
       updatedTabs[currentTab] = updatedTab;
       updateActivityTab(activity._id, updatedTab._id, {
         currentState: updatedTab.currentState,
@@ -198,6 +199,7 @@ class GgbActivityGraph extends Component {
   };
 
   initializeGgb = () => {
+    // eslint-disable-next-line no-unused-vars
     const { tabs, tabId, user, activity, setFirstTabLoaded } = this.props;
     this.ggbApplet = window.ggbApplet;
     // this.setState({ loading: false });
@@ -215,10 +217,7 @@ class GgbActivityGraph extends Component {
     //   console.log("[erspecitve");
     //   this.ggbApplet.setPerspective(perspective);
     // }
-    if (user._id === activity.creator) {
-      this.freezeElements(false);
-      // this.freezeElements(true)
-    } else {
+    if (user._id !== activity.creator) {
       this.freezeElements(true);
     }
     this.registerListeners();

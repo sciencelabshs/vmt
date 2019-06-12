@@ -9,6 +9,7 @@ const ControlWarningModal = ({
   showControlWarning,
   toggleControlWarning,
 }) => {
+  console.log('inControl: ', inControl);
   return (
     <Modal show={showControlWarning} closeModal={toggleControlWarning}>
       <div data-testid="control-warning">
