@@ -111,7 +111,7 @@ class LoginLayout extends PureComponent {
               Login
             </Button>
           </div>
-          <div>or</div> */
+          <div>or</div>
           <GoogleLogin />
         </div>
       </div>
