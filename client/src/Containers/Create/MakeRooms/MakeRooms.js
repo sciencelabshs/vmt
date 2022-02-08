@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { Aux, BigModal } from 'Components';
-import { Step1, Step2Course, ParticipantList } from './index';
+import { Step1, Step2Course } from './index';
 import createClasses from '../create.css';
 import { createRoom } from '../../../store/actions';
 import AssignmentMatrix from './AssignmentMatrix';
@@ -390,15 +390,7 @@ class MakeRooms extends Component {
       error,
       roomDrafts,
     } = this.state;
-    // @TODO STUDENTLIST SHOULD REFLECT THIS.STATE.REMAINING STUDENTS -- RIGHT NOW THERE IS A
-    // DISCREPANCY BETWEEN THOSE LISTS AS ONE HOLD IDS AND THE OTHER HOLDS OBJECTS
-    const participantList = (
-      <ParticipantList
-        list={course ? remainingParticipants : selectedParticipants}
-        selectedParticipants={selectedParticipants}
-        select={this.setParticipants}
-      />
-    );
+
     const assignmentMatrix = (
       <AssignmentMatrix
         list={course ? remainingParticipants : selectedParticipants}
@@ -416,13 +408,15 @@ class MakeRooms extends Component {
     let CurrentStep = (
       <Step1
         dueDate={dueDate}
+        participants={selectedParticipants}
         setDueDate={this.setDate}
         nextStep={this.nextStep}
-        participantList={participantList}
         userId={userId}
         select={this.selectParticipant}
         course={course}
-        selectedParticipants={selectedParticipants}
+        setParticipants={(participants) =>
+          this.setState({ selectedParticipants: participants })
+        }
       />
     );
 
@@ -431,6 +425,7 @@ class MakeRooms extends Component {
       CurrentStep = (
         <Step2Course
           activity={activity}
+          participantList={selectedParticipants}
           assignmentMatrix={assignmentMatrix}
           submit={this.submit}
           setRandom={this.setRandom}
