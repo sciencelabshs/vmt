@@ -62,27 +62,27 @@ class Step1 extends Component {
     return (
       <div className={classes.Container}>
         <DueDate dueDate={dueDate} selectDate={setDueDate} />
-
-        <InfoBox
-          title="Add Participants"
-          icon={<i className="fas fa-user-plus" />}
-        >
-          <Fragment>
-            <Search
-              data-testid="member-search"
-              _search={this.search}
-              placeholder="search existing VMT users by username or email address"
-            />
-            {searchResults.length > 0 ? (
-              <SearchResults
-                searchText={searchText}
-                usersSearched={searchResults}
-                inviteMember={this.addParticipant}
+        {!course && (
+          <InfoBox
+            title="Add Participants"
+            icon={<i className="fas fa-user-plus" />}
+          >
+            <Fragment>
+              <Search
+                data-testid="member-search"
+                _search={this.search}
+                placeholder="search existing VMT users by username or email address"
               />
-            ) : null}
-          </Fragment>
-        </InfoBox>
-
+              {searchResults.length > 0 ? (
+                <SearchResults
+                  searchText={searchText}
+                  usersSearched={searchResults}
+                  inviteMember={this.addParticipant}
+                />
+              ) : null}
+            </Fragment>
+          </InfoBox>
+        )}
         <InfoBox title="Participants" icon={<i className="fas fa-users" />}>
           <div
             data-testid="members"
